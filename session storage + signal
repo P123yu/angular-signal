@@ -1,0 +1,148 @@
+
+
+
+
+
+// normal signal without any state persistance =======================================================================================
+
+// import { Injectable,signal } from '@angular/core';
+
+// @Injectable({
+//   providedIn: 'root'
+// })
+// export class Sign {
+
+//   constructor() { }
+
+//    myData = signal<string>(''); // Shared signal
+
+//   setData(value: string) {
+//     this.myData.set(value);
+//   }
+
+//   getData() {
+//     return this.myData;
+//   }
+// }
+
+
+
+// with session storage + signal ======================================================================
+
+import { effect, Injectable, signal } from '@angular/core';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class Sign {
+  private storageKey = 'myData';
+
+  // Initialize signal with value from sessionStorage, or empty string
+  private initialValue = sessionStorage.getItem(this.storageKey) || '';
+
+  // Signal that holds the shared data
+  myData = signal<string>(this.initialValue);
+
+  constructor() {
+    // Effect to keep sessionStorage in sync with signal
+    effect(() => {
+      const currentValue = this.myData();
+      sessionStorage.setItem(this.storageKey, currentValue);
+    });
+  }
+
+  // Set a new value and automatically update sessionStorage via effect
+  setData(value: string) {
+    this.myData.set(value);
+  }
+
+  // Get the signal (reactive access)
+  getData() {
+    return this.myData;
+  }
+
+  // Clear signal and remove value from sessionStorage
+  clearData() {
+    this.myData.set('');
+    sessionStorage.removeItem(this.storageKey);
+  }
+}
+
+
+
+// component =================================================================================================================
+
+// COMPONENT A
+
+// a.html
+
+<p>a works!</p>
+
+<button (click)="handleSetData()">Set value into signal</button>
+
+<button (click)="removeSignalData()">remove data from signal</button>
+
+// a.ts
+
+import { Component, inject } from '@angular/core';
+import { Sign } from '../sign';
+
+@Component({
+  selector: 'app-a',
+  imports: [],
+  templateUrl: './a.html',
+  styleUrl: './a.css',
+})
+export class A {
+  private store = inject(Sign);
+
+  handleSetData() {
+    this.store.setData('Hello from Component A');
+  }
+
+  removeSignalData() {
+    this.store.clearData();
+  }
+}
+
+
+// COMPONENT B =============================================================================================================
+
+// b.html
+
+<p>b works!</p>
+
+{{ store.getData()() }} // or {{name}}
+
+
+
+// b.ts
+
+import { Component, inject } from '@angular/core';
+import { Sign } from '../sign';
+
+@Component({
+  selector: 'app-b',
+  imports: [],
+  templateUrl: './b.html',
+  styleUrl: './b.css',
+})
+export class B {
+  store = inject(Sign);
+
+  //  name: string=this.store.getData()();   // not working in signal because this not reactive in nature
+
+  // get name() {
+  //   return this.store.getData()();
+  // }
+
+  get name() {
+    const s = this.store.getData();
+    const value = s();
+    return value;
+  }
+}
+
+
+
+
