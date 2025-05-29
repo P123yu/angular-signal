@@ -1,0 +1,98 @@
+
+// ng g s sign  ==> here sign is smallest name of signal which we give to our project 
+
+import { Injectable,signal } from '@angular/core';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class Sign {
+
+  constructor() { }
+
+   myData = signal<string>(''); // Shared signal
+
+  setData(value: string) {
+    this.myData.set(value);
+  }
+
+  getData() {
+    return this.myData;
+  }
+}
+
+
+// now component A will push some string data to signal store 
+
+// a.html
+
+<p>a works!</p>
+<button (click)="handleSetData()">Set value into signal</button>
+
+
+// a.ts 
+
+import { Component, inject } from '@angular/core';
+import { Sign } from '../sign';
+
+@Component({
+  selector: 'app-a',
+  imports: [],
+  templateUrl: './a.html',
+  styleUrl: './a.css'
+})
+export class A {
+
+  private store = inject(Sign);
+
+  handleSetData() {
+    this.store.setData('Hello from Component A');
+  }
+
+
+}
+
+
+
+
+
+// now component B will fetch the string data which is stored in signal store which is pushed by component A 
+
+
+// b.html
+
+<p>b works!</p>
+{{ store.getData()() }} // or {{name}}
+
+
+// b.ts
+
+import { Component, inject } from '@angular/core';
+import { Sign } from '../sign';
+
+@Component({
+  selector: 'app-b',
+  imports: [],
+  templateUrl: './b.html',
+  styleUrl: './b.css',
+})
+export class B {
+  store = inject(Sign);
+
+  //  name: string=this.store.getData()();   // not working in signal because this not reactive in nature
+
+  // get name() {
+  //   return this.store.getData()();
+  // }
+
+  get name() {
+    const s = this.store.getData();
+    const value = s();
+    return value;
+  }
+}
+
+
+
+
+
