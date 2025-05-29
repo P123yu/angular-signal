@@ -22,6 +22,9 @@ export class Sign {
 }
 
 
+// for generating component ==> ng g c component-name in small letters
+
+
 // now component A will push some string data to signal store 
 
 // a.html
